@@ -1,0 +1,86 @@
+services:
+  mysql-db:
+    image: mysql:8.0
+    container_name: devhunter-mysql
+    environment:
+      MYSQL_DATABASE: devhunter
+      MYSQL_USER: devhunter
+      MYSQL_PASSWORD: devhunter
+      MYSQL_ROOT_PASSWORD: rootpassword
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-prootpassword"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  rabbitmq-server:
+    image: rabbitmq:3-management
+    container_name: devhunter-rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  bounty-service:
+    build: ./bounty-service
+    container_name: devhunter-bounty-service
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql-db:3306/devhunter
+      SPRING_DATASOURCE_USERNAME: devhunter
+      SPRING_DATASOURCE_PASSWORD: devhunter
+      SPRING_RABBITMQ_HOST: rabbitmq-server
+      SPRING_RABBITMQ_PORT: 5672
+      SPRING_RABBITMQ_USERNAME: guest
+      SPRING_RABBITMQ_PASSWORD: guest
+    depends_on:
+      mysql-db:
+        condition: service_healthy
+      rabbitmq-server:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  review-service:
+    build: ./review-service
+    container_name: devhunter-review-service
+    environment:
+      SPRING_RABBITMQ_HOST: rabbitmq-server
+      SPRING_RABBITMQ_PORT: 5672
+      SPRING_RABBITMQ_USERNAME: guest
+      SPRING_RABBITMQ_PASSWORD: guest
+    depends_on:
+      rabbitmq-server:
+        condition: service_healthy
+      bounty-service:
+        condition: service_started
+
+  frontend:
+    build: ./Front/front-end
+    container_name: devhunter-frontend
+    ports:
+      - "8081:80"
+    depends_on:
+      bounty-service:
+        condition: service_started
+    environment:
+      - API_URL=http://bounty-service:8080
+
+volumes:
+  mysql_data:
+
