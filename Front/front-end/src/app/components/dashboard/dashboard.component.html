@@ -18,8 +18,12 @@
   </header>
 
   <main class="app-main">
-    <app-create-bounty-form (bountyCreated)="onBountyCreated()"></app-create-bounty-form>
+    <app-create-bounty-form 
+      *ngIf="currentUser?.role === 'MASTER'" 
+      (bountyCreated)="onBountyCreated()">
+    </app-create-bounty-form>
     <app-bounty-dashboard #dashboard></app-bounty-dashboard>
   </main>
 </div>
+
 

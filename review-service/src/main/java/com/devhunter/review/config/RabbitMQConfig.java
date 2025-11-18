@@ -1,4 +1,4 @@
-package com.devhunter.bounty.config;
+package com.devhunter.review.config;
 
 import org.springframework.amqp.core.Queue;
 import org.springframework.context.annotation.Bean;
@@ -8,16 +8,10 @@ import org.springframework.context.annotation.Configuration;
 public class RabbitMQConfig {
 
     public static final String BOUNTY_SUBMISSION_QUEUE = "bounty.submission.queue";
-    public static final String BOUNTY_CLAIM_QUEUE = "bounty.claim.queue";
 
     @Bean
     public Queue submissionQueue() {
         return new Queue(BOUNTY_SUBMISSION_QUEUE, true);
-    }
-
-    @Bean
-    public Queue claimRequestQueue() {
-        return new Queue(BOUNTY_CLAIM_QUEUE, true);
     }
 }
 

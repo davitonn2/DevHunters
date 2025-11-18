@@ -56,11 +56,12 @@ export class RegisterComponent {
           this.loading = false;
         }
       },
-      error: () => {
-        this.error = 'Erro ao criar conta';
+      error: (err) => {
+        this.error = err?.error ?? 'Erro ao criar conta';
         this.loading = false;
       }
     });
   }
 }
+
 

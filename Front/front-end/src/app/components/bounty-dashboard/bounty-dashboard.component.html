@@ -23,25 +23,37 @@
         <span class="xp-badge">+{{ bounty.rewardXp }} XP</span>
       </div>
       <p class="bounty-description">{{ bounty.description }}</p>
+      <div class="bounty-meta">
+        <small *ngIf="bounty.createdBy">Criado por: {{ bounty.createdBy?.name }}</small>
+        <small *ngIf="bounty.hunter">Hunter: {{ bounty.hunter?.name }}</small>
+        <small *ngIf="bounty.pendingHunter">Interesse pendente: {{ bounty.pendingHunter?.name }}</small>
+      </div>
       <div class="bounty-status">
-        <span class="status-badge" [class]="'status-' + bounty.status?.toLowerCase()">
+        <span class="status-badge" [class]="statusClass(bounty.status)">
           {{ bounty.status }}
         </span>
       </div>
       <div class="bounty-actions">
         <button 
-          *ngIf="bounty.status === 'ABERTA'" 
+          *ngIf="canClaim(bounty)" 
           (click)="claimBounty(bounty.id!)" 
           class="btn btn-primary">
-          🎯 Reivindicar
+          🎯 Manifestar interesse
         </button>
         <button 
-          *ngIf="bounty.status === 'EM_ANDAMENTO' && bounty.hunter?.id === hunterId" 
+          *ngIf="canApprove(bounty)" 
+          (click)="approveClaim(bounty.id!)" 
+          class="btn btn-secondary">
+          ✅ Aprovar Hunter
+        </button>
+        <button 
+          *ngIf="canSubmit(bounty)" 
           (click)="submitBounty(bounty.id!)" 
           class="btn btn-success">
           ✅ Entregar
         </button>
         <button 
+          *ngIf="canDelete(bounty)"
           (click)="deleteBounty(bounty.id!)" 
           class="btn btn-danger">
           🗑️ Deletar
@@ -50,4 +62,5 @@
     </div>
   </div>
 </div>
+
 

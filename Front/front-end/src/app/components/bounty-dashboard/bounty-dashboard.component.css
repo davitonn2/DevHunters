@@ -121,19 +121,37 @@
   font-family: 'Courier New', monospace;
 }
 
+.bounty-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin-bottom: 0.75rem;
+  color: #00ff00;
+  opacity: 0.8;
+  font-size: 0.85rem;
+  font-family: 'Courier New', monospace;
+}
+
+.status-default,
 .status-aberta {
   background: rgba(0, 255, 0, 0.2);
   color: #00ff00;
   border: 1px solid #00ff00;
 }
 
-.status-em_andamento {
+.status-aguardando-aprovacao {
+  background: rgba(255, 165, 0, 0.15);
+  color: #ffa500;
+  border: 1px solid #ffa500;
+}
+
+.status-em-andamento {
   background: rgba(255, 255, 0, 0.2);
   color: #ffff00;
   border: 1px solid #ffff00;
 }
 
-.status-em_revisao {
+.status-em-revisao {
   background: rgba(0, 150, 255, 0.2);
   color: #0096ff;
   border: 1px solid #0096ff;
@@ -182,6 +200,17 @@
 .btn-success:hover:not(:disabled) {
   background: #00cc00;
   box-shadow: 0 0 15px rgba(0, 255, 0, 0.6);
+}
+
+.btn-secondary {
+  background: transparent;
+  color: #00bcd4;
+  border: 2px solid #00bcd4;
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background: rgba(0, 188, 212, 0.1);
+  box-shadow: 0 0 10px rgba(0, 188, 212, 0.5);
 }
 
 .btn-danger {

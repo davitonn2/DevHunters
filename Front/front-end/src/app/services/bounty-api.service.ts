@@ -8,10 +8,15 @@ export interface Bounty {
   description: string;
   rewardXp: number;
   status?: string;
-  hunter?: {
-    id: number;
-    name: string;
-  };
+  hunter?: BountyUserRef;
+  createdBy?: BountyUserRef;
+  pendingHunter?: BountyUserRef;
+}
+
+export interface BountyUserRef {
+  id: number;
+  name: string;
+  role?: string;
 }
 
 export interface BountyCreateDTO {
@@ -38,7 +43,7 @@ export class BountyApiService {
 
   constructor(private http: HttpClient) { }
 
-  getOpenBounties(): Observable<Bounty[]> {
+  getBounties(): Observable<Bounty[]> {
     return this.http.get<Bounty[]>(this.apiUrl);
   }
 
@@ -46,12 +51,16 @@ export class BountyApiService {
     return this.http.post<Bounty>(this.apiUrl, data);
   }
 
-  claimBounty(id: number, hunterId: number): Observable<Bounty> {
-    return this.http.put<Bounty>(`${this.apiUrl}/${id}/claim`, { hunterId });
+  claimBounty(id: number, hunterId?: number): Observable<Bounty> {
+    return this.http.put<Bounty>(`${this.apiUrl}/${id}/claim`, hunterId ? { hunterId } : {});
   }
 
-  submitBounty(id: number, hunterId: number): Observable<void> {
-    return this.http.post<void>(`${this.apiUrl}/${id}/submit`, { hunterId });
+  approveClaim(id: number): Observable<Bounty> {
+    return this.http.put<Bounty>(`${this.apiUrl}/${id}/claim/approve`, {});
+  }
+
+  submitBounty(id: number, hunterId?: number): Observable<void> {
+    return this.http.post<void>(`${this.apiUrl}/${id}/submit`, hunterId ? { hunterId } : {});
   }
 
   deleteBounty(id: number): Observable<void> {

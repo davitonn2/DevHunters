@@ -43,11 +43,12 @@ export class LoginComponent {
           this.loading = false;
         }
       },
-      error: () => {
-        this.error = 'Erro ao fazer login';
+      error: (err) => {
+        this.error = err?.error ?? 'Erro ao fazer login';
         this.loading = false;
       }
     });
   }
 }
+
 

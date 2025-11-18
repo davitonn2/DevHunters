@@ -1,12 +1,14 @@
 import { Injectable } from '@angular/core';
 import { Router } from '@angular/router';
 import { BehaviorSubject, Observable } from 'rxjs';
+import { map, switchMap, tap } from 'rxjs/operators';
+import { HttpClient } from '@angular/common/http';
 
 export interface User {
   id: number;
   name: string;
   email: string;
-  role: 'HUNTER' | 'MASTER';
+  role: 'HUNTER' | 'MASTER' | 'ADMIN';
 }
 
 export interface LoginCredentials {
@@ -21,77 +23,93 @@ export interface RegisterData {
   role: 'HUNTER' | 'MASTER';
 }
 
+interface LoginResponse {
+  token: string;
+  userId: number;
+  name: string;
+  login: string;
+  role: 'HUNTER' | 'MASTER' | 'ADMIN';
+}
+
 @Injectable({
   providedIn: 'root'
 })
 export class AuthService {
+  private readonly TOKEN_KEY = 'devhunter_token';
+  private readonly USER_KEY = 'devhunter_user';
   private currentUserSubject = new BehaviorSubject<User | null>(this.getStoredUser());
   public currentUser$ = this.currentUserSubject.asObservable();
 
-  constructor(private router: Router) {}
+  constructor(private router: Router, private http: HttpClient) {}
 
   login(credentials: LoginCredentials): Observable<boolean> {
-    // Simulação de login - em produção, chamaria a API
-    return new Observable(observer => {
-      setTimeout(() => {
-        // Simulação: aceita qualquer email/password
-        const user: User = {
-          id: 1,
-          name: credentials.email.split('@')[0],
-          email: credentials.email,
-          role: 'HUNTER'
-        };
-        this.setUser(user);
-        observer.next(true);
-        observer.complete();
-      }, 500);
-    });
+    const payload = { login: credentials.email, password: credentials.password };
+    return this.http.post<LoginResponse>('/api/auth/login', payload).pipe(
+      tap(response => this.persistSession(response)),
+      map(() => true)
+    );
   }
 
   register(data: RegisterData): Observable<boolean> {
-    // Simulação de registro - em produção, chamaria a API
-    return new Observable(observer => {
-      setTimeout(() => {
-        const user: User = {
-          id: Date.now(),
-          name: data.name,
-          email: data.email,
-          role: data.role
-        };
-        this.setUser(user);
-        observer.next(true);
-        observer.complete();
-      }, 500);
-    });
+    const payload = {
+      login: data.email,
+      password: data.password,
+      role: data.role,
+      name: data.name
+    };
+
+    return this.http.post<void>('/api/auth/register', payload).pipe(
+      switchMap(() => this.login({ email: data.email, password: data.password }))
+    );
   }
 
   logout(): void {
-    localStorage.removeItem('devhunter_user');
-    localStorage.removeItem('devhunter_token');
+    localStorage.removeItem(this.USER_KEY);
+    localStorage.removeItem(this.TOKEN_KEY);
     this.currentUserSubject.next(null);
     this.router.navigate(['/login']);
   }
 
   isAuthenticated(): boolean {
-    return this.currentUserSubject.value !== null;
+    return !!this.getToken();
   }
 
   getCurrentUser(): User | null {
     return this.currentUserSubject.value;
   }
 
-  private setUser(user: User): void {
-    localStorage.setItem('devhunter_user', JSON.stringify(user));
-    localStorage.setItem('devhunter_token', 'fake-jwt-token');
+  getToken(): string | null {
+    return localStorage.getItem(this.TOKEN_KEY);
+  }
+
+  hasRole(role: User['role']): boolean {
+    return this.currentUserSubject.value?.role === role;
+  }
+
+  private persistSession(response: LoginResponse): void {
+    const user: User = {
+      id: response.userId,
+      name: response.name ?? response.login,
+      email: response.login,
+      role: response.role
+    };
+    localStorage.setItem(this.USER_KEY, JSON.stringify(user));
+    localStorage.setItem(this.TOKEN_KEY, response.token);
     this.currentUserSubject.next(user);
   }
 
   private getStoredUser(): User | null {
-    const userStr = localStorage.getItem('devhunter_user');
-    if (userStr) {
-      return JSON.parse(userStr);
+    const token = localStorage.getItem(this.TOKEN_KEY);
+    const userStr = localStorage.getItem(this.USER_KEY);
+    if (!token || !userStr) {
+      return null;
     }
-    return null;
+    try {
+      return JSON.parse(userStr) as User;
+    } catch {
+      return null;
+    }
   }
 }
+
 

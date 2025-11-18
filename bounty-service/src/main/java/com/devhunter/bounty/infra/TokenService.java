@@ -21,6 +21,8 @@ public class TokenService {
             String token = JWT.create()
                     .withIssuer("auth-devs2blu-api")
                     .withSubject(user.getLogin())
+                    .withClaim("id", user.getId())
+                    .withClaim("role", user.getRole().name())
                     .withExpiresAt(generateExpirationDate())
                     .sign(algorithm);
             return token;

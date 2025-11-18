@@ -41,11 +41,12 @@ export class CreateBountyFormComponent {
         alert('Bounty criada com sucesso!');
       },
       error: (err) => {
-        this.error = 'Erro ao criar bounty.';
+        this.error = err?.error ?? 'Erro ao criar bounty.';
         this.loading = false;
         console.error(err);
       }
     });
   }
 }
+
 

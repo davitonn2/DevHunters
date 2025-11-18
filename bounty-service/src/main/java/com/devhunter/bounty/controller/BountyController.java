@@ -6,7 +6,9 @@ import com.devhunter.bounty.model.dto.BountySubmissionRequestDTO;
 import com.devhunter.bounty.model.entity.Bounty;
 import com.devhunter.bounty.service.BountyService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -19,27 +21,39 @@ public class BountyController {
     private final BountyService bountyService;
 
     @PostMapping
+    @PreAuthorize("hasRole('MASTER')")
     public ResponseEntity<Bounty> createBounty(@RequestBody BountyCreateDTO dto) {
-        return ResponseEntity.ok(bountyService.createBounty(dto));
+        return ResponseEntity.status(HttpStatus.CREATED).body(bountyService.createBounty(dto));
     }
 
     @GetMapping
     public ResponseEntity<List<Bounty>> getOpenBounties() {
-        return ResponseEntity.ok(bountyService.getOpenBounties());
+        return ResponseEntity.ok(bountyService.getBounties());
     }
 
     @PutMapping("/{id}/claim")
-    public ResponseEntity<Bounty> claimBounty(@PathVariable Long id, @RequestBody BountyClaimDTO dto) {
-        return ResponseEntity.ok(bountyService.claimBounty(id, dto.getHunterId()));
+    @PreAuthorize("hasRole('HUNTER')")
+    public ResponseEntity<Bounty> claimBounty(@PathVariable Long id, @RequestBody(required = false) BountyClaimDTO dto) {
+        Long hunterId = dto != null ? dto.getHunterId() : null;
+        return ResponseEntity.accepted().body(bountyService.requestClaim(id, hunterId));
+    }
+
+    @PutMapping("/{id}/claim/approve")
+    @PreAuthorize("hasRole('MASTER')")
+    public ResponseEntity<Bounty> approveClaim(@PathVariable Long id) {
+        return ResponseEntity.ok(bountyService.approveClaim(id));
     }
 
     @PostMapping("/{id}/submit")
-    public ResponseEntity<Void> submitBounty(@PathVariable Long id, @RequestBody BountySubmissionRequestDTO dto) {
-        bountyService.submitBounty(id, dto.getHunterId());
+    @PreAuthorize("hasRole('HUNTER')")
+    public ResponseEntity<Void> submitBounty(@PathVariable Long id, @RequestBody(required = false) BountySubmissionRequestDTO dto) {
+        Long hunterId = dto != null ? dto.getHunterId() : null;
+        bountyService.submitBounty(id, hunterId);
         return ResponseEntity.accepted().build();
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('MASTER')")
     public ResponseEntity<Void> deleteBounty(@PathVariable Long id) {
         bountyService.deleteBounty(id);
         return ResponseEntity.noContent().build();

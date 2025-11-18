@@ -1,6 +1,8 @@
 package com.devhunter.bounty.model.entity;
 
 import com.devhunter.bounty.model.enums.UserRole;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -20,6 +22,7 @@ import java.util.List;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
+@JsonIgnoreProperties({"authorities"})
 public class User implements UserDetails {
 
     @Id
@@ -33,6 +36,7 @@ public class User implements UserDetails {
 
     private String login;
 
+    @JsonIgnore
     private String password;
 
     @Override

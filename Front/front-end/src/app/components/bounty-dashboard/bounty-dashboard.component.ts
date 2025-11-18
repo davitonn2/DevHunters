@@ -1,8 +1,9 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Subscription } from 'rxjs';
 import { BountyApiService, Bounty } from '../../services/bounty-api.service';
-import { AuthService } from '../../services/auth.service';
+import { AuthService, User } from '../../services/auth.service';
 
 @Component({
   selector: 'app-bounty-dashboard',
@@ -11,11 +12,13 @@ import { AuthService } from '../../services/auth.service';
   templateUrl: './bounty-dashboard.component.html',
   styleUrl: './bounty-dashboard.component.css'
 })
-export class BountyDashboardComponent implements OnInit {
+export class BountyDashboardComponent implements OnInit, OnDestroy {
   bounties: Bounty[] = [];
   loading = false;
   error: string | null = null;
-  hunterId: number = 1;
+  hunterId: number | null = null;
+  currentUser: User | null = null;
+  private subscriptions = new Subscription();
 
   constructor(
     private bountyService: BountyApiService,
@@ -23,23 +26,29 @@ export class BountyDashboardComponent implements OnInit {
   ) { }
 
   ngOnInit(): void {
-    const user = this.authService.getCurrentUser();
-    if (user) {
-      this.hunterId = user.id;
-    }
+    this.subscriptions.add(
+      this.authService.currentUser$.subscribe(user => {
+        this.currentUser = user;
+        this.hunterId = user?.id ?? null;
+      })
+    );
     this.loadBounties();
+  }
+
+  ngOnDestroy(): void {
+    this.subscriptions.unsubscribe();
   }
 
   loadBounties(): void {
     this.loading = true;
     this.error = null;
-    this.bountyService.getOpenBounties().subscribe({
+    this.bountyService.getBounties().subscribe({
       next: (data) => {
         this.bounties = data;
         this.loading = false;
       },
       error: (err) => {
-        this.error = 'Erro ao carregar bounties. Verifique se o backend está rodando.';
+        this.error = this.resolveError(err, 'Erro ao carregar bounties. Verifique se o backend está rodando.');
         this.loading = false;
         console.error(err);
       }
@@ -47,25 +56,49 @@ export class BountyDashboardComponent implements OnInit {
   }
 
   claimBounty(bountyId: number): void {
+    if (!this.hunterId) {
+      this.error = 'Você precisa estar autenticado como Hunter para reivindicar.';
+      return;
+    }
+
     this.bountyService.claimBounty(bountyId, this.hunterId).subscribe({
       next: () => {
+        alert('Interesse registrado! Aguarde o master aprovar sua solicitação.');
         this.loadBounties();
       },
       error: (err) => {
-        this.error = 'Erro ao reivindicar bounty.';
+        this.error = this.resolveError(err, 'Erro ao reivindicar bounty.');
         console.error(err);
       }
     });
   }
 
   submitBounty(bountyId: number): void {
+    if (!this.hunterId) {
+      this.error = 'Você precisa estar autenticado como Hunter para entregar.';
+      return;
+    }
+
     this.bountyService.submitBounty(bountyId, this.hunterId).subscribe({
       next: () => {
         alert('Bounty entregue com sucesso! Aguardando revisão...');
         this.loadBounties();
       },
       error: (err) => {
-        this.error = 'Erro ao entregar bounty.';
+        this.error = this.resolveError(err, 'Erro ao entregar bounty.');
+        console.error(err);
+      }
+    });
+  }
+
+  approveClaim(bountyId: number): void {
+    this.bountyService.approveClaim(bountyId).subscribe({
+      next: () => {
+        alert('Reivindicação aprovada com sucesso.');
+        this.loadBounties();
+      },
+      error: (err) => {
+        this.error = this.resolveError(err, 'Erro ao aprovar reivindicação.');
         console.error(err);
       }
     });
@@ -78,11 +111,49 @@ export class BountyDashboardComponent implements OnInit {
           this.loadBounties();
         },
         error: (err) => {
-          this.error = 'Erro ao deletar bounty.';
+          this.error = this.resolveError(err, 'Erro ao deletar bounty.');
           console.error(err);
         }
       });
     }
+  }
+
+  canClaim(bounty: Bounty): boolean {
+    return bounty.status === 'ABERTA' && !!this.currentUser && this.currentUser.role === 'HUNTER';
+  }
+
+  canSubmit(bounty: Bounty): boolean {
+    return bounty.status === 'EM_ANDAMENTO' && !!bounty.hunter && bounty.hunter.id === this.hunterId;
+  }
+
+  canDelete(bounty: Bounty): boolean {
+    return this.currentUser?.role === 'MASTER' && bounty.createdBy?.id === this.currentUser?.id;
+  }
+
+  canApprove(bounty: Bounty): boolean {
+    return bounty.status === 'AGUARDANDO_APROVACAO'
+      && this.currentUser?.role === 'MASTER'
+      && bounty.createdBy?.id === this.currentUser?.id;
+  }
+
+  statusClass(status?: string): string {
+    if (!status) {
+      return 'status-default';
+    }
+    return 'status-' + status.toLowerCase().replace(/_/g, '-');
+  }
+
+  private resolveError(err: any, fallback: string): string {
+    if (!err) {
+      return fallback;
+    }
+    if (typeof err.error === 'string') {
+      return err.error;
+    }
+    if (err.error?.message) {
+      return err.error.message;
+    }
+    return fallback;
   }
 }
 

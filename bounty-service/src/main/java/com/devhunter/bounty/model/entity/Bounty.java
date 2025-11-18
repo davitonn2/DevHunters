@@ -1,6 +1,7 @@
 package com.devhunter.bounty.model.entity;
 
 import com.devhunter.bounty.model.enums.BountyStatus;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -29,10 +30,22 @@ public class Bounty {
     private Integer rewardXp;
 
     @Enumerated(EnumType.STRING)
+    @Column(length = 40)
     private BountyStatus status;
 
     @ManyToOne(fetch = FetchType.LAZY)
+    @JsonIgnoreProperties({"password", "authorities"})
     @JoinColumn(name = "hunter_id")
     private User hunter;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JsonIgnoreProperties({"password", "authorities"})
+    @JoinColumn(name = "created_by_id")
+    private User createdBy;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JsonIgnoreProperties({"password", "authorities"})
+    @JoinColumn(name = "pending_hunter_id")
+    private User pendingHunter;
 }
 

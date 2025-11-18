@@ -6,12 +6,11 @@ import com.devhunter.bounty.model.dto.LoginResponseDTO;
 import com.devhunter.bounty.model.dto.RegisterDTO;
 import com.devhunter.bounty.model.entity.User;
 import com.devhunter.bounty.repository.UserRepository;
-import com.devhunter.bounty.service.AuthorizationService;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -30,20 +29,22 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity login(@RequestBody AuthenticationDTO dto){
+    public ResponseEntity<LoginResponseDTO> login(@RequestBody AuthenticationDTO dto){
         var userPassword = new UsernamePasswordAuthenticationToken(dto.login(),dto.password());
         var auth = authenticationManager.authenticate(userPassword);
-        String token = tokenService.generateToken((User) auth.getPrincipal());
-        return ResponseEntity.ok(new LoginResponseDTO(token));
+        User user = (User) auth.getPrincipal();
+        String token = tokenService.generateToken(user);
+        return ResponseEntity.ok(new LoginResponseDTO(token, user.getId(), user.getName(), user.getLogin(), user.getRole()));
     }
 
     @PostMapping("/register")
-    public ResponseEntity register(@RequestBody RegisterDTO dto) {
-    if(this.userRepository.findByLogin(dto.login()) != null) return ResponseEntity.badRequest().build();
+    public ResponseEntity<Void> register(@RequestBody RegisterDTO dto) {
+        if(this.userRepository.findByLogin(dto.login()) != null) return ResponseEntity.badRequest().build();
 
-    String encryptedPassword = new BCryptPasswordEncoder().encode(dto.password());
-    User user = new User(dto.login(), encryptedPassword, dto.role());
-    userRepository.save(user);
-    return ResponseEntity.ok().build();
+        String encryptedPassword = new BCryptPasswordEncoder().encode(dto.password());
+        User user = new User(dto.login(), encryptedPassword, dto.role());
+        user.setName(dto.name());
+        userRepository.save(user);
+        return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 }
