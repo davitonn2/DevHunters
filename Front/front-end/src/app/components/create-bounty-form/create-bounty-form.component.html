@@ -1,0 +1,48 @@
+<div class="form-container">
+  <h2>➕ Criar Nova Bounty</h2>
+  
+  <form (ngSubmit)="onSubmit()">
+    <div class="form-group">
+      <label for="title">Título:</label>
+      <input 
+        type="text" 
+        id="title" 
+        [(ngModel)]="bounty.title" 
+        name="title"
+        required
+        placeholder="Ex: Corrigir bug no login">
+    </div>
+
+    <div class="form-group">
+      <label for="description">Descrição:</label>
+      <textarea 
+        id="description" 
+        [(ngModel)]="bounty.description" 
+        name="description"
+        rows="4"
+        required
+        placeholder="Descreva a tarefa em detalhes..."></textarea>
+    </div>
+
+    <div class="form-group">
+      <label for="rewardXp">Recompensa (XP):</label>
+      <input 
+        type="number" 
+        id="rewardXp" 
+        [(ngModel)]="bounty.rewardXp" 
+        name="rewardXp"
+        min="1"
+        required
+        placeholder="100">
+    </div>
+
+    <div *ngIf="error" class="error-message">
+      {{ error }}
+    </div>
+
+    <button type="submit" [disabled]="loading" class="btn btn-primary">
+      {{ loading ? 'Criando...' : 'Criar Bounty' }}
+    </button>
+  </form>
+</div>
+

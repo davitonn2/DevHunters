@@ -1,0 +1,25 @@
+<div class="dashboard-wrapper">
+  <header class="app-header">
+    <div class="header-content">
+      <div class="logo-section">
+        <h1>🎯 DevHunter</h1>
+        <p class="subtitle">Plataforma Gamificada de Bug Bounty</p>
+      </div>
+      <div class="user-section">
+        <div class="user-info">
+          <span class="user-name">{{ currentUser?.name }}</span>
+          <span class="user-role">[{{ currentUser?.role }}]</span>
+        </div>
+        <button (click)="logout()" class="btn-logout">
+          🚪 Logout
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="app-main">
+    <app-create-bounty-form (bountyCreated)="onBountyCreated()"></app-create-bounty-form>
+    <app-bounty-dashboard #dashboard></app-bounty-dashboard>
+  </main>
+</div>
+

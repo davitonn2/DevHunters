@@ -1,0 +1,147 @@
+.register-container {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #000;
+  padding: 2rem;
+}
+
+.register-card {
+  background: #0a0a0a;
+  border: 2px solid #00ff00;
+  border-radius: 8px;
+  padding: 3rem;
+  width: 100%;
+  max-width: 450px;
+  box-shadow: 0 0 20px rgba(0, 255, 0, 0.3);
+}
+
+.logo-section {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.logo-section h1 {
+  color: #00ff00;
+  font-size: 2.5rem;
+  margin: 0;
+  text-shadow: 0 0 10px rgba(0, 255, 0, 0.5);
+  font-family: 'Courier New', monospace;
+}
+
+.subtitle {
+  color: #00ff00;
+  opacity: 0.7;
+  margin-top: 0.5rem;
+  font-size: 0.9rem;
+}
+
+.register-form h2 {
+  color: #00ff00;
+  margin-bottom: 1.5rem;
+  font-family: 'Courier New', monospace;
+}
+
+.form-group {
+  margin-bottom: 1.5rem;
+}
+
+.form-group label {
+  display: block;
+  color: #00ff00;
+  margin-bottom: 0.5rem;
+  font-size: 0.9rem;
+  font-family: 'Courier New', monospace;
+}
+
+.hacker-input {
+  width: 100%;
+  padding: 0.75rem;
+  background: #000;
+  border: 1px solid #00ff00;
+  border-radius: 4px;
+  color: #00ff00;
+  font-family: 'Courier New', monospace;
+  font-size: 1rem;
+  transition: all 0.3s;
+}
+
+.hacker-input:focus {
+  outline: none;
+  border-color: #00ff00;
+  box-shadow: 0 0 10px rgba(0, 255, 0, 0.5);
+  background: #0a0a0a;
+}
+
+.hacker-input::placeholder {
+  color: #00ff00;
+  opacity: 0.5;
+}
+
+.hacker-input option {
+  background: #000;
+  color: #00ff00;
+}
+
+.error-message {
+  background: rgba(255, 0, 0, 0.1);
+  border: 1px solid #ff0000;
+  color: #ff0000;
+  padding: 0.75rem;
+  border-radius: 4px;
+  margin-bottom: 1rem;
+  font-family: 'Courier New', monospace;
+  font-size: 0.9rem;
+}
+
+.btn {
+  width: 100%;
+  padding: 0.75rem;
+  border: none;
+  border-radius: 4px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.3s;
+  font-family: 'Courier New', monospace;
+  font-weight: bold;
+}
+
+.btn-primary {
+  background: #00ff00;
+  color: #000;
+  border: 2px solid #00ff00;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: #00cc00;
+  box-shadow: 0 0 15px rgba(0, 255, 0, 0.6);
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.login-link {
+  margin-top: 1.5rem;
+  text-align: center;
+}
+
+.login-link p {
+  color: #00ff00;
+  opacity: 0.7;
+  font-size: 0.9rem;
+}
+
+.login-link a {
+  color: #00ff00;
+  text-decoration: none;
+  font-weight: bold;
+}
+
+.login-link a:hover {
+  text-decoration: underline;
+  text-shadow: 0 0 5px rgba(0, 255, 0, 0.5);
+}
+
