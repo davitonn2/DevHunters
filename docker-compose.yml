@@ -1,12 +1,12 @@
 services:
   mysql-db:
     image: mysql:8.0
-    container_name: devhunter-mysql
+    container_name: devhunter-mysql-v2
     environment:
       MYSQL_DATABASE: devhunter
       MYSQL_USER: devhunter
-      MYSQL_PASSWORD: devhunter
-      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_PASSWORD: admin123
+      MYSQL_ROOT_PASSWORD: root
     ports:
       - "3307:3306"
     volumes:
@@ -19,7 +19,7 @@ services:
 
   rabbitmq-server:
     image: rabbitmq:3-management
-    container_name: devhunter-rabbitmq
+    container_name: devhunter-rabbitmq-v2
     environment:
       RABBITMQ_DEFAULT_USER: guest
       RABBITMQ_DEFAULT_PASS: guest
@@ -34,13 +34,13 @@ services:
 
   bounty-service:
     build: ./bounty-service
-    container_name: devhunter-bounty-service
+    container_name: devhunter-bounty-service-v2
     ports:
-      - "8080:8080"
+      - "8082:8082"
     environment:
       SPRING_DATASOURCE_URL: jdbc:mysql://mysql-db:3306/devhunter
       SPRING_DATASOURCE_USERNAME: devhunter
-      SPRING_DATASOURCE_PASSWORD: devhunter
+      SPRING_DATASOURCE_PASSWORD: admin123
       SPRING_RABBITMQ_HOST: rabbitmq-server
       SPRING_RABBITMQ_PORT: 5672
       SPRING_RABBITMQ_USERNAME: guest
@@ -58,7 +58,9 @@ services:
 
   review-service:
     build: ./review-service
-    container_name: devhunter-review-service
+    container_name: devhunter-review-service-v2
+    ports:
+      - "8083:8080"
     environment:
       SPRING_RABBITMQ_HOST: rabbitmq-server
       SPRING_RABBITMQ_PORT: 5672
@@ -72,14 +74,14 @@ services:
 
   frontend:
     build: ./Front/front-end
-    container_name: devhunter-frontend
+    container_name: devhunter-frontend-v2
     ports:
       - "8081:80"
     depends_on:
       bounty-service:
         condition: service_started
     environment:
-      - API_URL=http://bounty-service:8080
+      - API_URL=http://bounty-service:8082
 
 volumes:
   mysql_data:
