@@ -2,12 +2,16 @@ package com.devhunter.bounty.model.dto;
 
 import lombok.Builder;
 import lombok.Getter;
+import lombok.AllArgsConstructor;
+import lombok.NoArgsConstructor;
 
 import java.io.Serial;
 import java.io.Serializable;
 
 @Getter
 @Builder
+@AllArgsConstructor
+@NoArgsConstructor
 public class BountyClaimNotificationDTO implements Serializable {
 
     @Serial

@@ -10,7 +10,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -21,11 +21,13 @@ public class AuthController {
     private final AuthenticationManager authenticationManager;
     private final UserRepository userRepository;
     private final TokenService tokenService;
+    private final PasswordEncoder passwordEncoder;
 
-    public AuthController( AuthenticationManager authenticationManager, UserRepository userRepository, TokenService tokenService) {
+    public AuthController(AuthenticationManager authenticationManager, UserRepository userRepository, TokenService tokenService, PasswordEncoder passwordEncoder) {
         this.authenticationManager = authenticationManager;
         this.userRepository = userRepository;
         this.tokenService = tokenService;
+        this.passwordEncoder = passwordEncoder;
     }
 
     @PostMapping("/login")
@@ -49,7 +51,7 @@ public class AuthController {
     public ResponseEntity<Void> register(@RequestBody RegisterDTO dto) {
         if(this.userRepository.findByLogin(dto.login()) != null) return ResponseEntity.badRequest().build();
 
-        String encryptedPassword = new BCryptPasswordEncoder().encode(dto.password());
+        String encryptedPassword = this.passwordEncoder.encode(dto.password());
         User user = new User(dto.login(), encryptedPassword, dto.role());
         user.setName(dto.name());
         userRepository.save(user);

@@ -1,6 +1,7 @@
 package com.devhunter.bounty.model.entity;
 
 import jakarta.persistence.*;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.devhunter.bounty.model.enums.UserRole;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -15,6 +16,7 @@ import java.util.List;
 @Table(name = "users")
 @Entity(name = "users")
 @Data
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler", "password", "authorities"})
 @NoArgsConstructor
 @AllArgsConstructor
 public class User implements UserDetails {
@@ -44,13 +46,15 @@ public class User implements UserDetails {
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        if(this.role == UserRole.ADMIN) return List.of(new SimpleGrantedAuthority("ROLE_ADMIN"), new SimpleGrantedAuthority("ROLE_USER"));
+        if(this.role == UserRole.MASTER) return List.of(new SimpleGrantedAuthority("ROLE_MASTER"));
+        else if(this.role == UserRole.HUNTER) return List.of(new SimpleGrantedAuthority("ROLE_HUNTER"));
+        else if(this.role == UserRole.ADMIN) return List.of(new SimpleGrantedAuthority("ROLE_ADMIN"));
         else return List.of(new SimpleGrantedAuthority("ROLE_USER"));
     }
 
     @Override
     public String getPassword() {
-        return "";
+        return this.password;
     }
 
     @Override
