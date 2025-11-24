@@ -63,8 +63,12 @@ export class BountyApiService {
     return this.http.post<void>(`${this.apiUrl}/${id}/submit`, hunterId ? { hunterId } : {});
   }
 
+  // Novo método para o Master fechar e creditar o XP
+  completeBounty(id: number): Observable<void> {
+    return this.http.put<void>(`${this.apiUrl}/${id}/complete`, {});
+  }
+
   deleteBounty(id: number): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/${id}`);
   }
 }
-

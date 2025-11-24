@@ -1,14 +1,10 @@
 package com.devhunter.bounty.model.entity;
 
-import com.devhunter.bounty.model.enums.UserRole;
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
+import com.devhunter.bounty.model.enums.UserRole;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
+import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -16,70 +12,69 @@ import org.springframework.security.core.userdetails.UserDetails;
 import java.util.Collection;
 import java.util.List;
 
+@Table(name = "users")
 @Entity(name = "users")
-@Getter
-@Setter
-@Builder
-@AllArgsConstructor
+@Data
 @NoArgsConstructor
-@JsonIgnoreProperties({"authorities"})
+@AllArgsConstructor
 public class User implements UserDetails {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    private String login;
+
+    private String password;
+
     private String name;
+
+    // Inicializa com 0 para evitar NullPointerException ao somar XP
+    private Integer xp = 0;
 
     @Enumerated(EnumType.STRING)
     private UserRole role;
 
-    private String login;
-
-    @JsonIgnore
-    private String password;
+    public User(String login, String password, UserRole role) {
+        this.login = login;
+        this.password = password;
+        this.role = role;
+        this.xp = 0; // Garante 0 também no construtor customizado
+    }
 
     @Override
-    public Collection<? extends GrantedAuthority> getAuthorities(){
-        if(this.role == UserRole.ADMIN) return List.of(new SimpleGrantedAuthority("ROLE_ADMIN"));
-        else if(this.role == UserRole.MASTER) return List.of(new SimpleGrantedAuthority("ROLE_MASTER"));
-        else return List.of(new SimpleGrantedAuthority("ROLE_HUNTER"));
+    public Collection<? extends GrantedAuthority> getAuthorities() {
+        if(this.role == UserRole.ADMIN) return List.of(new SimpleGrantedAuthority("ROLE_ADMIN"), new SimpleGrantedAuthority("ROLE_USER"));
+        else return List.of(new SimpleGrantedAuthority("ROLE_USER"));
     }
 
     @Override
     public String getPassword() {
-        return this.password;
+        return "";
     }
 
     @Override
     public String getUsername() {
-        return this.login;
+        return login;
     }
 
     @Override
-    public boolean isAccountNonExpired(){
+    public boolean isAccountNonExpired() {
         return true;
     }
 
     @Override
-    public boolean isAccountNonLocked(){
+    public boolean isAccountNonLocked() {
         return true;
     }
 
     @Override
-    public boolean isCredentialsNonExpired(){
+    public boolean isCredentialsNonExpired() {
         return true;
     }
 
     @Override
-    public boolean isEnabled(){
+    public boolean isEnabled() {
         return true;
-    }
-
-    public User(String login, String password, UserRole role){
-        this.login = login;
-        this.password = password;
-        this.role = role;
     }
 }
-

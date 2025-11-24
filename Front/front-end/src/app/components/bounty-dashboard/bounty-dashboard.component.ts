@@ -104,6 +104,19 @@ export class BountyDashboardComponent implements OnInit, OnDestroy {
     });
   }
 
+  completeBounty(bountyId: number): void {
+    this.bountyService.completeBounty(bountyId).subscribe({
+      next: () => {
+        alert('Bounty finalizada com sucesso! XP creditado ao Hunter.');
+        this.loadBounties();
+      },
+      error: (err) => {
+        this.error = this.resolveError(err, 'Erro ao finalizar bounty.');
+        console.error(err);
+      }
+    });
+  }
+
   deleteBounty(bountyId: number): void {
     if (confirm('Tem certeza que deseja deletar esta bounty?')) {
       this.bountyService.deleteBounty(bountyId).subscribe({
@@ -136,6 +149,12 @@ export class BountyDashboardComponent implements OnInit, OnDestroy {
       && bounty.createdBy?.id === this.currentUser?.id;
   }
 
+  canComplete(bounty: Bounty): boolean {
+    return bounty.status === 'EM_REVISAO'
+      && this.currentUser?.role === 'MASTER'
+      && bounty.createdBy?.id === this.currentUser?.id;
+  }
+
   statusClass(status?: string): string {
     if (!status) {
       return 'status-default';
@@ -156,4 +175,3 @@ export class BountyDashboardComponent implements OnInit, OnDestroy {
     return fallback;
   }
 }
-

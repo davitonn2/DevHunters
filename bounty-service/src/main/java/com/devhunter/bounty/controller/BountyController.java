@@ -44,6 +44,13 @@ public class BountyController {
         return ResponseEntity.ok(bountyService.approveClaim(id));
     }
 
+    @PutMapping("/{id}/complete")
+    @PreAuthorize("hasRole('MASTER')")
+    public ResponseEntity<Void> completeBounty(@PathVariable Long id) {
+        bountyService.completeBounty(id);
+        return ResponseEntity.noContent().build();
+    }
+
     @PostMapping("/{id}/submit")
     @PreAuthorize("hasRole('HUNTER')")
     public ResponseEntity<Void> submitBounty(@PathVariable Long id, @RequestBody(required = false) BountySubmissionRequestDTO dto) {

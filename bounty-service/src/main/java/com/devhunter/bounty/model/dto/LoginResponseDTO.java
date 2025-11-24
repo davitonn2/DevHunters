@@ -6,5 +6,6 @@ public record LoginResponseDTO(String token,
                                Long userId,
                                String name,
                                String login,
-                               UserRole role) {
+                               UserRole role,
+                               Integer xp) {
 }

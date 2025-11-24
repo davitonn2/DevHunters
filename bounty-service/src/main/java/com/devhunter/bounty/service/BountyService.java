@@ -46,7 +46,8 @@ public class BountyService {
 
     @Transactional(readOnly = true)
     public List<Bounty> getBounties() {
-        return bountyRepository.findAll();
+        // Correto: Filtrar apenas por status ABERTA
+        return bountyRepository.findAllByStatus(BountyStatus.ABERTA);
     }
 
     @Transactional
@@ -99,11 +100,16 @@ public class BountyService {
         bounty.setStatus(BountyStatus.EM_REVISAO);
         bountyRepository.save(bounty);
 
+        // Notificação de Submissão (Master é notificado para revisar)
+        notifyMasterAboutSubmission(bounty, hunter);
+
         BountySubmissionDTO submissionDTO = BountySubmissionDTO.builder()
-                .bountyId(bountyId)
-                .hunterId(hunter.getId())
+                .bountyId(bounty.getId())
+                .hunterId(bounty.getHunter().getId())
                 .build();
-        rabbitTemplate.convertAndSend(RabbitMQConfig.BOUNTY_SUBMISSION_QUEUE, submissionDTO);
+
+        // 🚨 CORREÇÃO AQUI: Usar a fila 'bounty.submission.queue' diretamente
+        rabbitTemplate.convertAndSend("bounty.submission.queue", submissionDTO);
     }
 
     @Transactional
@@ -116,6 +122,34 @@ public class BountyService {
         bountyRepository.delete(bounty);
     }
 
+    @Transactional
+    public void completeBounty(Long bountyId) {
+        User master = requireAuthenticatedUser();
+        requireRole(master, UserRole.MASTER);
+
+        Bounty bounty = findBounty(bountyId);
+        ensureOwner(master, bounty);
+
+        // Validação: Só pode finalizar se estiver EM_REVISAO
+        if (bounty.getStatus() != BountyStatus.EM_REVISAO) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Status inválido. A bounty deve estar EM_REVISAO para ser finalizada.");
+        }
+
+        User hunter = bounty.getHunter();
+        if (hunter == null) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Erro: Bounty sem hunter associado.");
+        }
+
+        bounty.setStatus(BountyStatus.FECHADA);
+        bountyRepository.save(bounty);
+
+        int xpReward = bounty.getRewardXp();
+        hunter.setXp(hunter.getXp() + xpReward);
+        userRepository.save(hunter); // CRUCIAL: Salva o Hunter atualizado com o novo XP
+
+        notifyHunterAboutCompletion(bounty, hunter);
+    }
+
     private User requireAuthenticatedUser() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null || authentication.getPrincipal() == null || "anonymousUser".equals(authentication.getPrincipal())) {
@@ -124,9 +158,11 @@ public class BountyService {
 
         String login = authentication.getName();
         User user = userRepository.findByLogin(login);
+
         if (user == null) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Usuário não encontrado.");
         }
+
         return user;
     }
 
@@ -147,6 +183,25 @@ public class BountyService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Bounty não encontrada."));
     }
 
+    private void notifyMasterAboutSubmission(Bounty bounty, User hunter) {
+        if (bounty.getCreatedBy() == null) {
+            return;
+        }
+
+        BountyClaimNotificationDTO notificationDTO = BountyClaimNotificationDTO.builder()
+                .bountyId(bounty.getId())
+                .bountyTitle(bounty.getTitle())
+                .hunterId(hunter.getId())
+                .hunterName(hunter.getName())
+                .masterId(bounty.getCreatedBy().getId())
+                .masterLogin(bounty.getCreatedBy().getLogin())
+                .build();
+
+        // 2. Hunter terminou: Notifica o Master para revisar.
+        // Reutiliza a fila por simplicidade
+        rabbitTemplate.convertAndSend(RabbitMQConfig.BOUNTY_CLAIM_QUEUE, notificationDTO);
+    }
+
     private void notifyMasterAboutClaim(Bounty bounty, User hunter) {
         if (bounty.getCreatedBy() == null) {
             return;
@@ -161,7 +216,21 @@ public class BountyService {
                 .masterLogin(bounty.getCreatedBy().getLogin())
                 .build();
 
+        // 1. Hunter quer fazer: Notifica o Master para aceitar/enviar detalhes.
         rabbitTemplate.convertAndSend(RabbitMQConfig.BOUNTY_CLAIM_QUEUE, notificationDTO);
+    }
+
+    private void notifyHunterAboutCompletion(Bounty bounty, User hunter) {
+        BountyClaimNotificationDTO notificationDTO = BountyClaimNotificationDTO.builder()
+                .bountyId(bounty.getId())
+                .bountyTitle(bounty.getTitle())
+                .hunterId(hunter.getId())
+                .hunterName(hunter.getName())
+                .masterId(bounty.getCreatedBy().getId())
+                .masterLogin(bounty.getCreatedBy().getLogin())
+                .build();
+
+        rabbitTemplate.convertAndSend(RabbitMQConfig.BOUNTY_COMPLETION_QUEUE, notificationDTO);
     }
 
     private void validatePayloadMatchesAuthenticatedUser(User user, Long hunterIdFromPayload) {

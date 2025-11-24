@@ -9,6 +9,7 @@ export interface User {
   name: string;
   email: string;
   role: 'HUNTER' | 'MASTER' | 'ADMIN';
+  xp?: number; // Opcional no objeto User (para flexibilidade)
 }
 
 export interface LoginCredentials {
@@ -29,6 +30,7 @@ interface LoginResponse {
   name: string;
   login: string;
   role: 'HUNTER' | 'MASTER' | 'ADMIN';
+  xp: number; // Obrigatório na resposta da API
 }
 
 @Injectable({
@@ -91,8 +93,10 @@ export class AuthService {
       id: response.userId,
       name: response.name ?? response.login,
       email: response.login,
-      role: response.role
+      role: response.role,
+      xp: response.xp // Mapeia o XP da resposta para o usuário
     };
+    
     localStorage.setItem(this.USER_KEY, JSON.stringify(user));
     localStorage.setItem(this.TOKEN_KEY, response.token);
     this.currentUserSubject.next(user);
@@ -111,5 +115,3 @@ export class AuthService {
     }
   }
 }
-
-
