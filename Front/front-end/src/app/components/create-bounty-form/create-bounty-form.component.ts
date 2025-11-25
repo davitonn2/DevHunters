@@ -25,7 +25,7 @@ export class CreateBountyFormComponent {
   constructor(private bountyService: BountyApiService) { }
 
   onSubmit(): void {
-    if (!this.bounty.title || !this.bounty.description || this.bounty.rewardXp <= 0) {
+    if (!this.bounty.title || !this.bounty.description || !this.bounty.rewardXp || this.bounty.rewardXp <= 0) {
       this.error = 'Preencha todos os campos corretamente.';
       return;
     }
@@ -33,7 +33,13 @@ export class CreateBountyFormComponent {
     this.loading = true;
     this.error = null;
 
-    this.bountyService.createBounty(this.bounty).subscribe({
+    // Garantir que rewardXp é um número
+    const bountyData = {
+      ...this.bounty,
+      rewardXp: Number(this.bounty.rewardXp)
+    };
+
+    this.bountyService.createBounty(bountyData).subscribe({
       next: () => {
         this.bounty = { title: '', description: '', rewardXp: 0 };
         this.loading = false;
@@ -41,7 +47,7 @@ export class CreateBountyFormComponent {
         alert('Bounty criada com sucesso!');
       },
       error: (err) => {
-        this.error = err?.error ?? 'Erro ao criar bounty.';
+        this.error = err?.error?.message ?? err?.error ?? 'Erro ao criar bounty.';
         this.loading = false;
         console.error(err);
       }

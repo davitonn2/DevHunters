@@ -50,6 +50,12 @@ public class BountyService {
         return bountyRepository.findAllByStatus(BountyStatus.ABERTA);
     }
 
+    @Transactional(readOnly = true)
+    public List<Bounty> getPendingBounties() {
+        // Retorna todas que não estão ABERTA (pendentes, em andamento, em revisão, etc.)
+        return bountyRepository.findAllByStatusNot(BountyStatus.ABERTA);
+    }
+
     @Transactional
     public Bounty requestClaim(Long bountyId, Long hunterIdFromPayload) {
         User hunter = requireAuthenticatedUser();
@@ -86,6 +92,38 @@ public class BountyService {
     }
 
     @Transactional
+    public Bounty rejectClaim(Long bountyId) {
+        User master = requireAuthenticatedUser();
+        requireRole(master, UserRole.MASTER);
+
+        Bounty bounty = findBounty(bountyId);
+        ensureOwner(master, bounty);
+
+        if (bounty.getStatus() != BountyStatus.AGUARDANDO_APROVACAO || bounty.getPendingHunter() == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Não existe solicitação pendente para este bounty.");
+        }
+
+        // Rejeita e volta a abertura
+        bounty.setPendingHunter(null);
+        bounty.setStatus(BountyStatus.ABERTA);
+        Bounty saved = bountyRepository.save(bounty);
+
+        // Notifica o Hunter que foi rejeitado (reutiliza fila de claims)
+        BountyClaimNotificationDTO notificationDTO = BountyClaimNotificationDTO.builder()
+                .bountyId(saved.getId())
+                .bountyTitle(saved.getTitle())
+                .hunterId(null)
+                .hunterName(null)
+                .masterId(master.getId())
+                .masterLogin(master.getLogin())
+                .build();
+
+        rabbitTemplate.convertAndSend(RabbitMQConfig.BOUNTY_CLAIM_QUEUE, notificationDTO);
+
+        return saved;
+    }
+
+    @Transactional
     public void submitBounty(Long bountyId, Long hunterIdFromPayload) {
         User hunter = requireAuthenticatedUser();
         requireRole(hunter, UserRole.HUNTER);
@@ -110,6 +148,35 @@ public class BountyService {
 
         // 🚨 CORREÇÃO AQUI: Usar a fila 'bounty.submission.queue' diretamente
         rabbitTemplate.convertAndSend("bounty.submission.queue", submissionDTO);
+    }
+
+    @Transactional
+    public void rejectReview(Long bountyId, String reason) {
+        User master = requireAuthenticatedUser();
+        requireRole(master, UserRole.MASTER);
+
+        Bounty bounty = findBounty(bountyId);
+        ensureOwner(master, bounty);
+
+        if (bounty.getStatus() != BountyStatus.EM_REVISAO) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Bounty não está em revisão.");
+        }
+
+        // Volta para em andamento para o hunter continuar
+        bounty.setStatus(BountyStatus.EM_ANDAMENTO);
+        bountyRepository.save(bounty);
+
+        // Notifica Hunter sobre reprovação com motivo
+        BountyClaimNotificationDTO notificationDTO = BountyClaimNotificationDTO.builder()
+                .bountyId(bounty.getId())
+                .bountyTitle(bounty.getTitle())
+                .hunterId(bounty.getHunter() != null ? bounty.getHunter().getId() : null)
+                .hunterName(bounty.getHunter() != null ? bounty.getHunter().getName() : null)
+                .masterId(master.getId())
+                .masterLogin(master.getLogin())
+                .build();
+
+        rabbitTemplate.convertAndSend(RabbitMQConfig.BOUNTY_COMPLETION_QUEUE, notificationDTO);
     }
 
     @Transactional

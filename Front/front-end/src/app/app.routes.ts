@@ -21,6 +21,11 @@ export const routes: Routes = [
     canActivate: [authGuard]
   },
   {
+    path: 'pendentes',
+    loadComponent: () => import('./components/pendentes/pendentes.component').then(m => m.PendentesComponent),
+    canActivate: [authGuard]
+  },
+  {
     path: '**',
     redirectTo: '/dashboard'
   }

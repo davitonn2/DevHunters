@@ -1,0 +1,29 @@
+<div class="pendentes">
+  <h2>Pendentes</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Título</th>
+        <th>Status</th>
+        <th>Hunter</th>
+        <th>Ações</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let b of bounties">
+        <td>{{b.title}}</td>
+        <td>{{b.status}}</td>
+        <td>{{b.pendingHunter?.name || b.hunter?.name || '-' }}</td>
+        <td>
+          <button *ngIf="userRole==='MASTER' && b.status==='AGUARDANDO_APROVACAO'" (click)="approve(b)">Aceitar</button>
+          <button *ngIf="userRole==='MASTER' && b.status==='AGUARDANDO_APROVACAO'" (click)="rejectClaim(b)">Recusar</button>
+
+          <button *ngIf="userRole==='HUNTER' && b.status==='EM_ANDAMENTO' && b.hunter?.id===auth.getCurrentUser()?.id" (click)="finish(b)">Finalizar</button>
+
+          <button *ngIf="userRole==='MASTER' && b.status==='EM_REVISAO'" (click)="approveReview(b)">Aprovar revisão</button>
+          <button *ngIf="userRole==='MASTER' && b.status==='EM_REVISAO'" (click)="rejectReview(b)">Reprovar revisão</button>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>

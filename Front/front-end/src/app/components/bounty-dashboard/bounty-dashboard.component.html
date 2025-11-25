@@ -24,8 +24,9 @@
   <div *ngIf="!loading && bounties.length === 0" class="empty-state">
     <p>Nenhuma bounty aberta no momento. 🎉</p>
   </div>
-
-  <div class="bounties-grid" *ngIf="!loading && bounties.length > 0">
+  <div class="bounties-grid" *ngIf="!loading">
+    <!-- Open bounties -->
+    <h2 *ngIf="bounties.length>0">Bounties Abertas</h2>
     <div *ngFor="let bounty of bounties" class="bounty-card">
       <div class="bounty-header">
         <h3>{{ bounty.title }}</h3>
@@ -85,5 +86,31 @@
         </button>
       </div>
     </div>
+    <!-- Pending / in-progress / awaiting review (side-by-side layout) -->
+    <h2 *ngIf="pendingBounties.length>0" style="grid-column: 1 / -1;">Pendentes / Em Andamento / Em Revisão</h2>
+    <div *ngFor="let bounty of pendingBounties" class="bounty-card pending">
+        <div class="bounty-header">
+          <h3>{{ bounty.title }}</h3>
+          <span class="xp-badge">+{{ bounty.rewardXp }} XP</span>
+        </div>
+        <p class="bounty-description">{{ bounty.description }}</p>
+        <div class="bounty-meta">
+          <small *ngIf="bounty.createdBy">Criado por: {{ bounty.createdBy?.name }}</small>
+          <small *ngIf="bounty.hunter">Hunter: {{ bounty.hunter?.name }}</small>
+          <small *ngIf="bounty.pendingHunter">Interesse pendente: {{ bounty.pendingHunter?.name }}</small>
+        </div>
+        <div class="bounty-status">
+          <span class="status-badge" [class]="statusClass(bounty.status)">
+            {{ bounty.status }}
+          </span>
+        </div>
+        <div class="bounty-actions">
+          <button *ngIf="canApprove(bounty)" (click)="approveClaim(bounty.id!)" class="btn btn-secondary">✅ Aprovar Hunter</button>
+          <button *ngIf="currentUser?.role==='MASTER' && bounty.status==='AGUARDANDO_APROVACAO'" (click)="rejectClaim(bounty.id!)" class="btn btn-warning">❌ Recusar</button>
+          <button *ngIf="canSubmit(bounty)" (click)="submitBounty(bounty.id!)" class="btn btn-success">✅ Entregar</button>
+          <button *ngIf="canComplete(bounty)" (click)="completeBounty(bounty.id!)" class="btn btn-success">🏆 Finalizar Bounty</button>
+          <button *ngIf="canDelete(bounty)" (click)="deleteBounty(bounty.id!)" class="btn btn-danger">🗑️ Deletar</button>
+        </div>
+      </div>
   </div>
 </div>

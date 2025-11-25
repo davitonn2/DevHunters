@@ -56,11 +56,9 @@ services:
       timeout: 10s
       retries: 3
 
-  review-service:
-    build: ./review-service
-    container_name: devhunter-review-service-v2
-    ports:
-      - "8083:8080"
+  email-service:
+    build: ./email-service
+    container_name: devhunter-email-service-v2
     environment:
       SPRING_RABBITMQ_HOST: rabbitmq-server
       SPRING_RABBITMQ_PORT: 5672

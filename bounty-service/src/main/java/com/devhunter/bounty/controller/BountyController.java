@@ -31,6 +31,11 @@ public class BountyController {
         return ResponseEntity.ok(bountyService.getBounties());
     }
 
+    @GetMapping("/pending")
+    public ResponseEntity<List<Bounty>> getPendingBounties() {
+        return ResponseEntity.ok(bountyService.getPendingBounties());
+    }
+
     @PutMapping("/{id}/claim")
     @PreAuthorize("hasRole('HUNTER')")
     public ResponseEntity<Bounty> claimBounty(@PathVariable Long id, @RequestBody(required = false) BountyClaimDTO dto) {
@@ -44,10 +49,23 @@ public class BountyController {
         return ResponseEntity.ok(bountyService.approveClaim(id));
     }
 
+    @PutMapping("/{id}/claim/reject")
+    @PreAuthorize("hasRole('MASTER')")
+    public ResponseEntity<Bounty> rejectClaim(@PathVariable Long id) {
+        return ResponseEntity.ok(bountyService.rejectClaim(id));
+    }
+
     @PutMapping("/{id}/complete")
     @PreAuthorize("hasRole('MASTER')")
     public ResponseEntity<Void> completeBounty(@PathVariable Long id) {
         bountyService.completeBounty(id);
+        return ResponseEntity.noContent().build();
+    }
+
+    @PutMapping("/{id}/review/reject")
+    @PreAuthorize("hasRole('MASTER')")
+    public ResponseEntity<Void> rejectReview(@PathVariable Long id, @RequestBody(required = false) String reason) {
+        bountyService.rejectReview(id, reason != null ? reason : "Motivo não informado");
         return ResponseEntity.noContent().build();
     }
 

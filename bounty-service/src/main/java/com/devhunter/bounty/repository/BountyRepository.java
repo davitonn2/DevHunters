@@ -8,5 +8,6 @@ import java.util.List;
 
 public interface BountyRepository extends JpaRepository<Bounty, Long> {
     List<Bounty> findAllByStatus(BountyStatus status);
+    List<Bounty> findAllByStatusNot(BountyStatus status);
 }
 

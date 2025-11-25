@@ -88,6 +88,13 @@ export class AuthService {
     return this.currentUserSubject.value?.role === role;
   }
 
+  refreshCurrentUser(): void {
+    const storedUser = this.getStoredUser();
+    if (storedUser) {
+      this.currentUserSubject.next(storedUser);
+    }
+  }
+
   private persistSession(response: LoginResponse): void {
     const user: User = {
       id: response.userId,

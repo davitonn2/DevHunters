@@ -14,11 +14,13 @@ import { AuthService, User } from '../../services/auth.service';
 })
 export class BountyDashboardComponent implements OnInit, OnDestroy {
   bounties: Bounty[] = [];
+  pendingBounties: Bounty[] = [];
   loading = false;
   error: string | null = null;
   hunterId: number | null = null;
   currentUser: User | null = null;
   private subscriptions = new Subscription();
+  private pollHandle: any = null;
 
   constructor(
     private bountyService: BountyApiService,
@@ -33,19 +35,44 @@ export class BountyDashboardComponent implements OnInit, OnDestroy {
       })
     );
     this.loadBounties();
+    // Poll periodically so hunters see status changes without navigating
+    this.pollHandle = setInterval(() => this.loadBounties(), 8000);
   }
 
   ngOnDestroy(): void {
     this.subscriptions.unsubscribe();
+    if (this.pollHandle) {
+      clearInterval(this.pollHandle);
+      this.pollHandle = null;
+    }
   }
 
   loadBounties(): void {
     this.loading = true;
     this.error = null;
+    // Load both open and pending bounties so the main dashboard shows current state for both roles
     this.bountyService.getBounties().subscribe({
       next: (data) => {
         this.bounties = data;
-        this.loading = false;
+        // after loading open bounties, load pending ones
+        this.bountyService.getPendingBounties().subscribe({
+          next: (pending) => {
+            // Para Hunters: filtrar apenas bounties em que ele é o hunter (claimed/submitted)
+            // Para Masters: mostrar todas as pendentes que ele criou
+            if (this.currentUser?.role === 'HUNTER') {
+              this.pendingBounties = pending.filter(b => b.hunter?.id === this.hunterId);
+            } else {
+              // Masters veem todas as pendentes que criaram
+              this.pendingBounties = pending.filter(b => b.createdBy?.id === this.currentUser?.id);
+            }
+            this.loading = false;
+          },
+          error: (err) => {
+            this.error = this.resolveError(err, 'Erro ao carregar bounties pendentes.');
+            this.loading = false;
+            console.error(err);
+          }
+        });
       },
       error: (err) => {
         this.error = this.resolveError(err, 'Erro ao carregar bounties. Verifique se o backend está rodando.');
@@ -104,10 +131,25 @@ export class BountyDashboardComponent implements OnInit, OnDestroy {
     });
   }
 
+  rejectClaim(bountyId: number): void {
+    this.bountyService.rejectClaim(bountyId).subscribe({
+      next: () => {
+        alert('Reivindicação recusada.');
+        this.loadBounties();
+      },
+      error: (err) => {
+        this.error = this.resolveError(err, 'Erro ao recusar reivindicação.');
+        console.error(err);
+      }
+    });
+  }
+
   completeBounty(bountyId: number): void {
     this.bountyService.completeBounty(bountyId).subscribe({
       next: () => {
         alert('Bounty finalizada com sucesso! XP creditado ao Hunter.');
+        // Recarregar dados do usuário atual para refletir XP atualizado imediatamente
+        this.authService.refreshCurrentUser();
         this.loadBounties();
       },
       error: (err) => {

@@ -47,6 +47,10 @@ export class BountyApiService {
     return this.http.get<Bounty[]>(this.apiUrl);
   }
 
+  getPendingBounties(): Observable<Bounty[]> {
+    return this.http.get<Bounty[]>(`${this.apiUrl}/pending`);
+  }
+
   createBounty(data: BountyCreateDTO): Observable<Bounty> {
     return this.http.post<Bounty>(this.apiUrl, data);
   }
@@ -59,6 +63,10 @@ export class BountyApiService {
     return this.http.put<Bounty>(`${this.apiUrl}/${id}/claim/approve`, {});
   }
 
+  rejectClaim(id: number): Observable<Bounty> {
+    return this.http.put<Bounty>(`${this.apiUrl}/${id}/claim/reject`, {});
+  }
+
   submitBounty(id: number, hunterId?: number): Observable<void> {
     return this.http.post<void>(`${this.apiUrl}/${id}/submit`, hunterId ? { hunterId } : {});
   }
@@ -66,6 +74,10 @@ export class BountyApiService {
   // Novo método para o Master fechar e creditar o XP
   completeBounty(id: number): Observable<void> {
     return this.http.put<void>(`${this.apiUrl}/${id}/complete`, {});
+  }
+
+  rejectReview(id: number, reason?: string): Observable<void> {
+    return this.http.put<void>(`${this.apiUrl}/${id}/review/reject`, reason ? reason : "");
   }
 
   deleteBounty(id: number): Observable<void> {
