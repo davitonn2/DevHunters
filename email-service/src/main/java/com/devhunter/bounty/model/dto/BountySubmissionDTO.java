@@ -14,4 +14,29 @@ import java.io.Serializable;
 public class BountySubmissionDTO implements Serializable {
     private Long bountyId;
     private Long hunterId;
+    private String masterLogin;
+
+    public Long getBountyId() {
+        return bountyId;
+    }
+
+    public void setBountyId(Long bountyId) {
+        this.bountyId = bountyId;
+    }
+
+    public Long getHunterId() {
+        return hunterId;
+    }
+
+    public void setHunterId(Long hunterId) {
+        this.hunterId = hunterId;
+    }
+
+    public String getMasterLogin() {
+        return masterLogin;
+    }
+
+    public void setMasterLogin(String masterLogin) {
+        this.masterLogin = masterLogin;
+    }
 }

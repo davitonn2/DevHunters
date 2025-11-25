@@ -35,23 +35,23 @@ public class EmailConsumer {
 
         // Aqui você teria que buscar o email do Mestre, mas vou mandar fixo pra vc testar
         // Troque pelo seu email real para teste
-        sendEmail("seu-email-aqui@gmail.com", assunto, corpo);
+        sendEmail(dto.getMasterLogin(), assunto, corpo);
     }
 
-    @RabbitListener(queues = RabbitMQConfig.COMPLETION_QUEUE)
-    public void handleCompletionNotification(BountyClaimNotificationDTO dto) {
-        String assunto = "DevHunter - Bounty Finalizada/Recusada";
-        String corpo = "Atualização final sobre a tarefa: " + dto.getBountyTitle() +
-                "\n\nVerifique seu XP e status na plataforma.";
+        @RabbitListener(queues = RabbitMQConfig.COMPLETION_QUEUE)
+        public void handleCompletionNotification(BountyClaimNotificationDTO dto) {
+            String assunto = "DevHunter - Bounty Finalizada/Recusada";
+            String corpo = "Atualização final sobre a tarefa: " + dto.getBountyTitle() +
+                    "\n\nVerifique seu XP e status na plataforma.";
 
-        // Tentando mandar pro login do Hunter (assumindo ser email)
-        // Se o login for só "joao", isso vai falhar.
-        if(dto.getHunterName() != null && dto.getHunterName().contains("@")) {
-            sendEmail(dto.getHunterName(), assunto, corpo);
-        } else {
-            System.out.println("⚠️ O login do hunter não parece um email: " + dto.getHunterName());
+            // Tentando mandar pro login do Hunter (assumindo ser email)
+            // Se o login for só "joao", isso vai falhar.
+            if(dto.getHunterEmail() != null && dto.getHunterEmail().contains("@")) {
+                sendEmail(dto.getHunterEmail(), assunto, corpo);
+            } else {
+                System.out.println("⚠️ O login do hunter não parece um email: " + dto.getHunterName());
+            }
         }
-    }
 
     private void sendEmail(String para, String assunto, String texto) {
         try {

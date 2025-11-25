@@ -18,4 +18,6 @@ public class BountyClaimNotificationDTO implements Serializable {
     private String hunterName;
     private Long masterId;
     private String masterLogin;
+    private String masterEmail;
+    private String hunterEmail;
 }
