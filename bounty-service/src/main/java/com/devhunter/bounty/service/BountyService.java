@@ -85,10 +85,28 @@ public class BountyService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Não existe solicitação pendente para este bounty.");
         }
 
-        bounty.setHunter(bounty.getPendingHunter());
+        User hunter = bounty.getPendingHunter(); // Pega o hunter antes de limpar o campo pending
+
+        bounty.setHunter(hunter);
         bounty.setPendingHunter(null);
         bounty.setStatus(BountyStatus.EM_ANDAMENTO);
-        return bountyRepository.save(bounty);
+        Bounty saved = bountyRepository.save(bounty);
+
+        // --- ADICIONADO: Avisa o Hunter que ele foi aprovado para começar ---
+        BountyClaimNotificationDTO notificationDTO = BountyClaimNotificationDTO.builder()
+                .bountyId(saved.getId())
+                .bountyTitle(saved.getTitle())
+                .hunterId(hunter.getId())
+                .hunterName(hunter.getName())
+                .masterId(master.getId())
+                .masterLogin(master.getLogin())
+                .build();
+
+        // Usamos a mesma fila de Claim para notificar a aprovação
+        rabbitTemplate.convertAndSend(RabbitMQConfig.BOUNTY_CLAIM_QUEUE, notificationDTO);
+        // ------------------------------------------------------------------
+
+        return saved;
     }
 
     @Transactional
@@ -210,9 +228,18 @@ public class BountyService {
         bounty.setStatus(BountyStatus.FECHADA);
         bountyRepository.save(bounty);
 
-        int xpReward = bounty.getRewardXp();
-        hunter.setXp(hunter.getXp() + xpReward);
-        userRepository.save(hunter); // CRUCIAL: Salva o Hunter atualizado com o novo XP
+        // --- CORREÇÃO DE XP (BLINDAGEM) ---
+        // Garante que não quebra se vier nulo do banco
+        int xpReward = bounty.getRewardXp() != null ? bounty.getRewardXp() : 0;
+        int currentXp = hunter.getXp() != null ? hunter.getXp() : 0;
+        int newXp = currentXp + xpReward;
+
+        hunter.setXp(newXp);
+        userRepository.save(hunter);
+
+        // Log para você confirmar no terminal que funcionou
+        System.out.println("✅ [XP UPGRADE] O Hunter " + hunter.getLogin() + " subiu de " + currentXp + " para " + newXp + " XP!");
+        // ----------------------------------
 
         notifyHunterAboutCompletion(bounty, hunter);
     }
