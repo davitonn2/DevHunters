@@ -15,5 +15,7 @@ public class BountySubmissionDTO implements Serializable {
     private Long bountyId;
     private Long hunterId;
     private String masterLogin;
-
+    private String hunterName;
+    private String masterName;
+    private String bountyTitle;
 }

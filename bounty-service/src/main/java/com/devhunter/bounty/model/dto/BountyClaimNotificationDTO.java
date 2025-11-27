@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 
 import java.io.Serial;
 import java.io.Serializable;
+import java.util.List;
 
 @Getter
 @Builder
@@ -23,5 +24,7 @@ public class BountyClaimNotificationDTO implements Serializable {
     private String hunterName;
     private Long masterId;
     private String masterLogin;
+    private String hunterEmail;
+    private List<String> targetEmails;
 }
 

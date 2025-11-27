@@ -12,5 +12,9 @@ import lombok.NoArgsConstructor;
 public class BountySubmissionDTO {
     private Long bountyId;
     private Long hunterId;
+    private String masterLogin;
+    private String bountyTitle;
+    private String hunterName;
+
 }
 

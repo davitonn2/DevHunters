@@ -12,10 +12,29 @@ public class RabbitMQConfig {
 
     public static final String BOUNTY_CLAIM_QUEUE = "bounty.claim.queue";
     public static final String BOUNTY_COMPLETION_QUEUE = "bounty.completion.queue";
+    public static final String BOUNTY_SUBMISSION_QUEUE = "bounty.submission.queue";
+    public static final String BOUNTY_APPROVED_QUEUE = "bounty.approved.queue";
+    public static final String BOUNTY_CREATED_QUEUE = "bounty.created.queue";
+    public static final String BOUNTY_REJECTED_QUEUE = "bounty.rejected.queue";
+
+    @Bean
+    public Queue rejectedQueue() {
+        return new Queue(BOUNTY_REJECTED_QUEUE, true);
+    }
+
+    @Bean
+    public Queue createdQueue() {
+        return new Queue(BOUNTY_CREATED_QUEUE, true);
+    }
+
+    @Bean
+    public Queue approvedQueue() {
+        return new Queue(BOUNTY_APPROVED_QUEUE, true);
+    }
 
     @Bean
     public Queue submissionQueue() {
-        return new Queue("bounty.submission.queue", true);
+        return new Queue(BOUNTY_SUBMISSION_QUEUE, true);
     }
 
     @Bean

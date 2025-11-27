@@ -41,7 +41,33 @@ public class BountyService {
                 .status(BountyStatus.ABERTA)
                 .createdBy(creator)
                 .build();
-        return bountyRepository.save(bounty);
+
+        Bounty saved = bountyRepository.save(bounty);
+        notifyAllHunters(saved, creator);
+        return saved;
+    }
+
+    private void notifyAllHunters(Bounty bounty, User creator){
+        try{
+            List<User> hunters = userRepository.findAllByRole(UserRole.HUNTER);
+
+            if(hunters.isEmpty()) return;
+
+            List<String> huntersEmails = hunters.stream()
+                    .map(User::getLogin)
+                    .toList();
+
+            BountyClaimNotificationDTO notificationDTO = BountyClaimNotificationDTO.builder()
+                    .bountyId(bounty.getId())
+                    .bountyTitle(bounty.getTitle())
+                    .masterLogin(creator.getLogin())
+                    .targetEmails(huntersEmails)
+                    .build();
+
+            rabbitTemplate.convertAndSend(RabbitMQConfig.BOUNTY_CREATED_QUEUE, notificationDTO);
+        } catch (Exception e){
+            System.out.println("❌ [NOTIFICAÇÃO HUNTERS] Falha ao notificar hunters sobre nova bounty: " + e.getMessage());
+        }
     }
 
     @Transactional(readOnly = true)
@@ -92,18 +118,20 @@ public class BountyService {
         bounty.setStatus(BountyStatus.EM_ANDAMENTO);
         Bounty saved = bountyRepository.save(bounty);
 
+
         // --- ADICIONADO: Avisa o Hunter que ele foi aprovado para começar ---
         BountyClaimNotificationDTO notificationDTO = BountyClaimNotificationDTO.builder()
                 .bountyId(saved.getId())
                 .bountyTitle(saved.getTitle())
                 .hunterId(hunter.getId())
                 .hunterName(hunter.getName())
+                .hunterEmail(hunter.getLogin())
                 .masterId(master.getId())
                 .masterLogin(master.getLogin())
                 .build();
 
         // Usamos a mesma fila de Claim para notificar a aprovação
-        rabbitTemplate.convertAndSend(RabbitMQConfig.BOUNTY_CLAIM_QUEUE, notificationDTO);
+        rabbitTemplate.convertAndSend(RabbitMQConfig.BOUNTY_APPROVED_QUEUE, notificationDTO);
         // ------------------------------------------------------------------
 
         return saved;
@@ -121,6 +149,9 @@ public class BountyService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Não existe solicitação pendente para este bounty.");
         }
 
+        User rejectedHunter = bounty.getPendingHunter();
+        String hunterEmail = rejectedHunter.getLogin();
+
         // Rejeita e volta a abertura
         bounty.setPendingHunter(null);
         bounty.setStatus(BountyStatus.ABERTA);
@@ -130,13 +161,14 @@ public class BountyService {
         BountyClaimNotificationDTO notificationDTO = BountyClaimNotificationDTO.builder()
                 .bountyId(saved.getId())
                 .bountyTitle(saved.getTitle())
-                .hunterId(null)
-                .hunterName(null)
+                .hunterId(rejectedHunter.getId())
+                .hunterName(rejectedHunter.getName())
+                .hunterEmail(hunterEmail)
                 .masterId(master.getId())
                 .masterLogin(master.getLogin())
                 .build();
 
-        rabbitTemplate.convertAndSend(RabbitMQConfig.BOUNTY_CLAIM_QUEUE, notificationDTO);
+        rabbitTemplate.convertAndSend(RabbitMQConfig.BOUNTY_REJECTED_QUEUE, notificationDTO);
 
         return saved;
     }
@@ -156,16 +188,18 @@ public class BountyService {
         bounty.setStatus(BountyStatus.EM_REVISAO);
         bountyRepository.save(bounty);
 
-        // Notificação de Submissão (Master é notificado para revisar)
-        notifyMasterAboutSubmission(bounty, hunter);
+        User master = bounty.getCreatedBy();
+        String emailMaster = master.getLogin();
 
         BountySubmissionDTO submissionDTO = BountySubmissionDTO.builder()
                 .bountyId(bounty.getId())
                 .hunterId(bounty.getHunter().getId())
+                .masterLogin(bounty.getCreatedBy().getLogin())
+                .bountyTitle(bounty.getTitle())
+                .hunterName(bounty.getHunter().getName())
                 .build();
 
-        // 🚨 CORREÇÃO AQUI: Usar a fila 'bounty.submission.queue' diretamente
-        rabbitTemplate.convertAndSend("bounty.submission.queue", submissionDTO);
+        rabbitTemplate.convertAndSend(RabbitMQConfig.BOUNTY_SUBMISSION_QUEUE, submissionDTO);
     }
 
     @Transactional
@@ -315,11 +349,13 @@ public class BountyService {
     }
 
     private void notifyHunterAboutCompletion(Bounty bounty, User hunter) {
+       String hunterEmail = hunter.getLogin();
         BountyClaimNotificationDTO notificationDTO = BountyClaimNotificationDTO.builder()
                 .bountyId(bounty.getId())
                 .bountyTitle(bounty.getTitle())
                 .hunterId(hunter.getId())
                 .hunterName(hunter.getName())
+                .hunterEmail(hunterEmail)
                 .masterId(bounty.getCreatedBy().getId())
                 .masterLogin(bounty.getCreatedBy().getLogin())
                 .build();
