@@ -22,9 +22,6 @@ public class EmailConsumer {
         String corpo = "Olá!\nO Hunter :" + dto.getHunterName() + " está interessado em trabalhar na sua bounty: " + dto.getBountyTitle() +
                 "\n\nVerifique a plataforma para aprovar ou recusar a solicitação.";
 
-        // ⚠️ IMPORTANTE: Como seu sistema usa 'login' e não tem campo 'email',
-        // estou assumindo que o login SEJA o email (ex: joao@gmail.com).
-        // Se não for, troque abaixo por um email fixo pra testar (ex: "seu-amigo@gmail.com")
         sendEmail(dto.getMasterLogin(), assunto, corpo);
     }
 
@@ -33,8 +30,6 @@ public class EmailConsumer {
         String assunto = "DevHunter - Bounty Submetida para Revisão!";
         String corpo = "O Hunter " + dto.getHunterName() + " entregou a Bounty  " + dto.getBountyTitle() + ".\nCorre lá pra revisar!";
 
-        // Aqui você teria que buscar o email do Mestre, mas vou mandar fixo pra vc testar
-        // Troque pelo seu email real para teste
         sendEmail(dto.getMasterLogin(), assunto, corpo);
     }
 
@@ -42,10 +37,8 @@ public class EmailConsumer {
         public void handleCompletionNotification(BountyClaimNotificationDTO dto) {
             String assunto = "DevHunter - Bounty Finalizada/Recusada";
             String corpo = "Atualização final sobre a tarefa: " + dto.getBountyTitle() +
-                    "\n\nVerifique seu XP e status na plataforma.";
+                    "\n\nVerifique sua recompensa e status na plataforma.";
 
-            // Tentando mandar pro login do Hunter (assumindo ser email)
-            // Se o login for só "joao", isso vai falhar.
             if(dto.getHunterEmail() != null && dto.getHunterEmail().contains("@")) {
                 sendEmail(dto.getHunterEmail(), assunto, corpo);
             } else {
@@ -75,7 +68,7 @@ public class EmailConsumer {
             String corpo = "Olá Hunter!\n\n" +
                     "Uma nova oportunidade foi postada pelo Master " + dto.getMasterLogin() + ".\n" +
                     "Título: " + dto.getBountyTitle() + "\n" +
-                    "Corra para a plataforma e garanta seu XP!";
+                    "Corra para a plataforma e garanta suas recompenas!";
 
             for (String emailHunter : dto.getTargetEmails()) {
                 if (emailHunter != null && emailHunter.contains("@")) {

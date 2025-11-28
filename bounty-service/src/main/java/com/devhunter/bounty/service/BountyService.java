@@ -19,6 +19,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 @Service
@@ -37,7 +38,7 @@ public class BountyService {
         Bounty bounty = Bounty.builder()
                 .title(dto.getTitle())
                 .description(dto.getDescription())
-                .rewardXp(dto.getRewardXp())
+                .rewardValue(dto.getRewardValue())
                 .status(BountyStatus.ABERTA)
                 .createdBy(creator)
                 .build();
@@ -262,18 +263,12 @@ public class BountyService {
         bounty.setStatus(BountyStatus.FECHADA);
         bountyRepository.save(bounty);
 
-        // --- CORREÇÃO DE XP (BLINDAGEM) ---
-        // Garante que não quebra se vier nulo do banco
-        int xpReward = bounty.getRewardXp() != null ? bounty.getRewardXp() : 0;
-        int currentXp = hunter.getXp() != null ? hunter.getXp() : 0;
-        int newXp = currentXp + xpReward;
+        BigDecimal valueReward = bounty.getRewardValue() != null ? bounty.getRewardValue() : BigDecimal.ZERO;
+        BigDecimal currentValue = hunter.getBalance() != null ? hunter.getBalance() : BigDecimal.ZERO;
+        BigDecimal newBalance = currentValue.add(valueReward);
 
-        hunter.setXp(newXp);
-        userRepository.save(hunter);
-
-        // Log para você confirmar no terminal que funcionou
-        System.out.println("✅ [XP UPGRADE] O Hunter " + hunter.getLogin() + " subiu de " + currentXp + " para " + newXp + " XP!");
-        // ----------------------------------
+        hunter.setBalance(newBalance);
+        userRepository.saveAndFlush(hunter);
 
         notifyHunterAboutCompletion(bounty, hunter);
     }
@@ -325,8 +320,6 @@ public class BountyService {
                 .masterLogin(bounty.getCreatedBy().getLogin())
                 .build();
 
-        // 2. Hunter terminou: Notifica o Master para revisar.
-        // Reutiliza a fila por simplicidade
         rabbitTemplate.convertAndSend(RabbitMQConfig.BOUNTY_CLAIM_QUEUE, notificationDTO);
     }
 
@@ -344,7 +337,6 @@ public class BountyService {
                 .masterLogin(bounty.getCreatedBy().getLogin())
                 .build();
 
-        // 1. Hunter quer fazer: Notifica o Master para aceitar/enviar detalhes.
         rabbitTemplate.convertAndSend(RabbitMQConfig.BOUNTY_CLAIM_QUEUE, notificationDTO);
     }
 

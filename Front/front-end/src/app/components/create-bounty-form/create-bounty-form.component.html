@@ -1,13 +1,13 @@
 <div class="form-container">
   <h2>➕ Criar Nova Bounty</h2>
-  
+
   <form (ngSubmit)="onSubmit()">
     <div class="form-group">
       <label for="title">Título:</label>
-      <input 
-        type="text" 
-        id="title" 
-        [(ngModel)]="bounty.title" 
+      <input
+        type="text"
+        id="title"
+        [(ngModel)]="bounty.title"
         name="title"
         required
         placeholder="Ex: Corrigir bug no login">
@@ -15,9 +15,9 @@
 
     <div class="form-group">
       <label for="description">Descrição:</label>
-      <textarea 
-        id="description" 
-        [(ngModel)]="bounty.description" 
+      <textarea
+        id="description"
+        [(ngModel)]="bounty.description"
         name="description"
         rows="4"
         required
@@ -25,11 +25,11 @@
     </div>
 
     <div class="form-group">
-      <label for="rewardXp">Recompensa (XP):</label>
-      <input 
-        type="number" 
-        id="rewardXp" 
-        [(ngModel)]="bounty.rewardXp" 
+      <label for="rewardXp">Recompensa (R$):</label>
+      <input
+        type="number"
+        id="rewardXp"
+        [(ngModel)]="bounty.rewardValue"
         name="rewardXp"
         min="1"
         required

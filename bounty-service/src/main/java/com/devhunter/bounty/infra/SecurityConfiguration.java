@@ -61,6 +61,7 @@ public class SecurityConfiguration {
                         .requestMatchers(HttpMethod.PUT, "/bounties/**").authenticated()
                         .requestMatchers(HttpMethod.POST, "/bounties/**").authenticated()
                         .requestMatchers(HttpMethod.DELETE, "/bounties/**").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/api/users/**").authenticated()
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .anyRequest().authenticated()
                 )

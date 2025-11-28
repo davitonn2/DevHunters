@@ -6,7 +6,7 @@ export interface Bounty {
   id?: number;
   title: string;
   description: string;
-  rewardXp: number;
+  rewardValue: number;
   status?: string;
   hunter?: BountyUserRef;
   createdBy?: BountyUserRef;
@@ -22,7 +22,7 @@ export interface BountyUserRef {
 export interface BountyCreateDTO {
   title: string;
   description: string;
-  rewardXp: number;
+  rewardValue: number;
 }
 
 export interface BountyClaimDTO {
@@ -37,8 +37,7 @@ export interface BountySubmissionRequestDTO {
   providedIn: 'root'
 })
 export class BountyApiService {
-  // No Docker, o nginx faz proxy de /api para o bounty-service
-  // Localmente, use http://localhost:8080/bounties
+
   private apiUrl = '/api/bounties';
 
   constructor(private http: HttpClient) { }
@@ -71,7 +70,6 @@ export class BountyApiService {
     return this.http.post<void>(`${this.apiUrl}/${id}/submit`, hunterId ? { hunterId } : {});
   }
 
-  // Novo método para o Master fechar e creditar o XP
   completeBounty(id: number): Observable<void> {
     return this.http.put<void>(`${this.apiUrl}/${id}/complete`, {});
   }

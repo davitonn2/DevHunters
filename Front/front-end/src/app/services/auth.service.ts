@@ -9,7 +9,7 @@ export interface User {
   name: string;
   email: string;
   role: 'HUNTER' | 'MASTER' | 'ADMIN';
-  xp?: number; // Opcional no objeto User (para flexibilidade)
+  balance?: number;
 }
 
 export interface LoginCredentials {
@@ -30,7 +30,7 @@ interface LoginResponse {
   name: string;
   login: string;
   role: 'HUNTER' | 'MASTER' | 'ADMIN';
-  xp: number; // Obrigatório na resposta da API
+  balance?: number;
 }
 
 @Injectable({
@@ -88,11 +88,32 @@ export class AuthService {
     return this.currentUserSubject.value?.role === role;
   }
 
-  refreshCurrentUser(): void {
-    const storedUser = this.getStoredUser();
-    if (storedUser) {
-      this.currentUserSubject.next(storedUser);
+  refreshCurrentUser(): Observable<User> {
+    const storedUser = this.getCurrentUser();
+    if(!storedUser) {
+      console.log('ERRO: ninguem logado para atualizar');
+      throw new Error("Nenhum usuario logado");
     }
+
+    const url = `/api/users/${storedUser.id}?t=${new Date().getTime()}`;
+    console.log('chamando backend:', url);
+
+    return this.http.get<any>(url).pipe(
+      tap((responseBackend:User) => {
+        console.log('RESPOSTA DO JAVA:', responseBackend);
+
+        const userAtualizado: User ={
+          id: responseBackend.id,
+          name: responseBackend.name,
+          email: responseBackend.email,
+          role: responseBackend.role,
+          balance: responseBackend.balance
+        }
+
+        localStorage.setItem(this.USER_KEY, JSON.stringify(userAtualizado));
+        this.currentUserSubject.next(userAtualizado);
+      })
+    );
   }
 
   private persistSession(response: LoginResponse): void {
@@ -101,9 +122,9 @@ export class AuthService {
       name: response.name ?? response.login,
       email: response.login,
       role: response.role,
-      xp: response.xp // Mapeia o XP da resposta para o usuário
+      balance: response.balance
     };
-    
+
     localStorage.setItem(this.USER_KEY, JSON.stringify(user));
     localStorage.setItem(this.TOKEN_KEY, response.token);
     this.currentUserSubject.next(user);

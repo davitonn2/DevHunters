@@ -9,6 +9,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.math.BigDecimal;
+
 @Entity
 @Table(name = "bounties")
 @Getter
@@ -27,7 +29,7 @@ public class Bounty {
     @Column(columnDefinition = "TEXT")
     private String description;
 
-    private Integer rewardXp;
+    private BigDecimal rewardValue;
 
     @Enumerated(EnumType.STRING)
     @Column(length = 40)

@@ -10,6 +10,7 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
+import java.math.BigDecimal;
 import java.util.Collection;
 import java.util.List;
 
@@ -31,8 +32,8 @@ public class User implements UserDetails {
 
     private String name;
 
-    // Inicializa com 0 para evitar NullPointerException ao somar XP
-    private Integer xp = 0;
+    @Column(name = "balance", precision = 19, scale = 2)
+    private BigDecimal balance = BigDecimal.ZERO;
 
     @Enumerated(EnumType.STRING)
     private UserRole role;
@@ -41,7 +42,7 @@ public class User implements UserDetails {
         this.login = login;
         this.password = password;
         this.role = role;
-        this.xp = 0; // Garante 0 também no construtor customizado
+        this.balance = BigDecimal.ZERO;
     }
 
     @Override

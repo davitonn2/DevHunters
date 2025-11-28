@@ -34,7 +34,6 @@ export class PendentesComponent implements OnInit {
   }
 
   finish(bounty: Bounty) {
-    // Hunter marks as submitted
     this.api.submitBounty(bounty.id!, bounty.hunter?.id).subscribe(() => this.load());
   }
 

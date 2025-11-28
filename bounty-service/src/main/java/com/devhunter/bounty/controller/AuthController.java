@@ -43,7 +43,7 @@ public class AuthController {
                 user.getName(),
                 user.getLogin(),
                 user.getRole(),
-                user.getXp()
+                user.getBalance()
         ));
     }
 

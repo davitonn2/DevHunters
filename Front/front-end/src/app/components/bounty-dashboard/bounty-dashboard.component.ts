@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { Subscription } from 'rxjs';
 import { BountyApiService, Bounty } from '../../services/bounty-api.service';
 import { AuthService, User } from '../../services/auth.service';
+import { ChangeDetectorRef } from '@angular/core';
 
 @Component({
   selector: 'app-bounty-dashboard',
@@ -24,7 +25,8 @@ export class BountyDashboardComponent implements OnInit, OnDestroy {
 
   constructor(
     private bountyService: BountyApiService,
-    private authService: AuthService
+    private authService: AuthService,
+    private cdr: ChangeDetectorRef
   ) { }
 
   ngOnInit(): void {
@@ -34,9 +36,28 @@ export class BountyDashboardComponent implements OnInit, OnDestroy {
         this.hunterId = user?.id ?? null;
       })
     );
+
     this.loadBounties();
-    // Poll periodically so hunters see status changes without navigating
-    this.pollHandle = setInterval(() => this.loadBounties(), 8000);
+
+    this.pollHandle = setInterval(() => {
+
+      // Atualiza Bounties
+      this.loadBounties();
+
+      // Atualiza Saldo
+      if (this.currentUser) {
+        this.authService.refreshCurrentUser().subscribe({
+          next: (user: User) => {
+
+            this.currentUser = user;
+
+            this.cdr.detectChanges();
+          },
+          error: (err) => console.error('❌ Erro no polling:', err)
+        });
+      } else {
+      }
+    }, 5000);
   }
 
   ngOnDestroy(): void {
@@ -50,19 +71,16 @@ export class BountyDashboardComponent implements OnInit, OnDestroy {
   loadBounties(): void {
     this.loading = true;
     this.error = null;
-    // Load both open and pending bounties so the main dashboard shows current state for both roles
+
     this.bountyService.getBounties().subscribe({
       next: (data) => {
         this.bounties = data;
-        // after loading open bounties, load pending ones
         this.bountyService.getPendingBounties().subscribe({
           next: (pending) => {
-            // Para Hunters: filtrar apenas bounties em que ele é o hunter (claimed/submitted)
-            // Para Masters: mostrar todas as pendentes que ele criou
+
             if (this.currentUser?.role === 'HUNTER') {
               this.pendingBounties = pending.filter(b => b.hunter?.id === this.hunterId);
             } else {
-              // Masters veem todas as pendentes que criaram
               this.pendingBounties = pending.filter(b => b.createdBy?.id === this.currentUser?.id);
             }
             this.loading = false;
@@ -147,9 +165,13 @@ export class BountyDashboardComponent implements OnInit, OnDestroy {
   completeBounty(bountyId: number): void {
     this.bountyService.completeBounty(bountyId).subscribe({
       next: () => {
-        alert('Bounty finalizada com sucesso! XP creditado ao Hunter.');
-        // Recarregar dados do usuário atual para refletir XP atualizado imediatamente
-        this.authService.refreshCurrentUser();
+        alert('Bounty finalizada com sucesso! Recompensa creditado ao Hunter.');
+        setTimeout(() =>{
+
+        this.authService.refreshCurrentUser().subscribe((userAtualizado:User) => {
+          this.currentUser = userAtualizado;
+        });
+        }, 500);
         this.loadBounties();
       },
       error: (err) => {

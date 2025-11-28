@@ -8,7 +8,7 @@
     <!-- Seção de Info do Usuário adicionada aqui -->
     <div class="user-info" *ngIf="currentUser">
       <span class="user-name">{{ currentUser.name }}</span>
-      <span *ngIf="currentUser.xp != null" class="user-xp">XP: {{ currentUser.xp }}</span>
+      <span *ngIf="currentUser?.balance != null" class="user-xp"> {{ currentUser?.balance | currency:'BRL'}}</span>
       <span class="user-role">[{{ currentUser.role }}]</span>
     </div>
   </div>
@@ -30,7 +30,7 @@
     <div *ngFor="let bounty of bounties" class="bounty-card">
       <div class="bounty-header">
         <h3>{{ bounty.title }}</h3>
-        <span class="xp-badge">+{{ bounty.rewardXp }} XP</span>
+        <span class="xp-badge">+{{ bounty.rewardValue | currency:'BRL' }} </span>
       </div>
       <p class="bounty-description">{{ bounty.description }}</p>
       <div class="bounty-meta">
@@ -43,44 +43,44 @@
           {{ bounty.status }}
         </span>
       </div>
-      
+
       <div class="bounty-actions">
         <!-- Botão para Hunter reivindicar -->
-        <button 
-          *ngIf="canClaim(bounty)" 
-          (click)="claimBounty(bounty.id!)" 
+        <button
+          *ngIf="canClaim(bounty)"
+          (click)="claimBounty(bounty.id!)"
           class="btn btn-primary">
           🎯 Manifestar interesse
         </button>
 
         <!-- Botão para Master aprovar Hunter -->
-        <button 
-          *ngIf="canApprove(bounty)" 
-          (click)="approveClaim(bounty.id!)" 
+        <button
+          *ngIf="canApprove(bounty)"
+          (click)="approveClaim(bounty.id!)"
           class="btn btn-secondary">
           ✅ Aprovar Hunter
         </button>
 
         <!-- Botão para Hunter entregar -->
-        <button 
-          *ngIf="canSubmit(bounty)" 
-          (click)="submitBounty(bounty.id!)" 
+        <button
+          *ngIf="canSubmit(bounty)"
+          (click)="submitBounty(bounty.id!)"
           class="btn btn-success">
           ✅ Entregar
         </button>
 
         <!-- NOVO BOTÃO: Master finaliza e paga XP -->
-        <button 
-          *ngIf="canComplete(bounty)" 
-          (click)="completeBounty(bounty.id!)" 
+        <button
+          *ngIf="canComplete(bounty)"
+          (click)="completeBounty(bounty.id!)"
           class="btn btn-success">
           🏆 Finalizar Bounty
         </button>
 
         <!-- Botão para Master deletar -->
-        <button 
+        <button
           *ngIf="canDelete(bounty)"
-          (click)="deleteBounty(bounty.id!)" 
+          (click)="deleteBounty(bounty.id!)"
           class="btn btn-danger">
           🗑️ Deletar
         </button>
@@ -91,7 +91,7 @@
     <div *ngFor="let bounty of pendingBounties" class="bounty-card pending">
         <div class="bounty-header">
           <h3>{{ bounty.title }}</h3>
-          <span class="xp-badge">+{{ bounty.rewardXp }} XP</span>
+          <span class="xp-badge">+{{ bounty.rewardValue | currency:'BRL' }} </span>
         </div>
         <p class="bounty-description">{{ bounty.description }}</p>
         <div class="bounty-meta">
